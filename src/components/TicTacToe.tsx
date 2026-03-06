@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react'
+import type { GameMode } from './ModeSelector'
 
 type Cell = 'X' | 'O' | null
 
 interface TicTacToeProps {
   gridSize: number
+  mode: GameMode
   onBack: () => void
 }
 
@@ -154,14 +156,16 @@ function getComputerMove(board: Cell[], gridSize: number): number {
 
 // --- Component ---
 
-export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
+export default function TicTacToe({ gridSize, mode, onBack }: TicTacToeProps) {
+  const isVsComputer = mode === 'computer'
   const totalCells = gridSize * gridSize
   const [board, setBoard] = useState<Cell[]>(() => Array(totalCells).fill(null))
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true)
+  const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X')
   const [winner, setWinner] = useState<Cell>(null)
   const [isDraw, setIsDraw] = useState(false)
-  const [scores, setScores] = useState({ player: 0, computer: 0, draws: 0 })
+  const [scores, setScores] = useState({ x: 0, o: 0, draws: 0 })
   const [winningCells, setWinningCells] = useState<Set<number>>(new Set())
+  const [waitingForAI, setWaitingForAI] = useState(false)
 
   const findWinningCells = useCallback(
     (b: Cell[], w: Cell): Set<number> => {
@@ -191,9 +195,9 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
     [gridSize]
   )
 
-  // Computer move
+  // Computer move (only in vs computer mode)
   useEffect(() => {
-    if (isPlayerTurn || winner || isDraw) return
+    if (!isVsComputer || currentPlayer !== 'O' || winner || isDraw || !waitingForAI) return
     const timer = setTimeout(() => {
       const move = getComputerMove(board, gridSize)
       if (move === -1) return
@@ -205,33 +209,40 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
       if (w) {
         setWinner(w)
         setWinningCells(findWinningCells(newBoard, w))
-        setScores((s) => ({ ...s, computer: s.computer + 1 }))
+        setScores((s) => ({ ...s, o: s.o + 1 }))
       } else if (isBoardFull(newBoard)) {
         setIsDraw(true)
         setScores((s) => ({ ...s, draws: s.draws + 1 }))
       } else {
-        setIsPlayerTurn(true)
+        setCurrentPlayer('X')
       }
+      setWaitingForAI(false)
     }, 350)
     return () => clearTimeout(timer)
-  }, [isPlayerTurn, board, winner, isDraw, gridSize, findWinningCells])
+  }, [currentPlayer, board, winner, isDraw, gridSize, findWinningCells, isVsComputer, waitingForAI])
 
   const handleCellClick = (index: number) => {
-    if (!isPlayerTurn || board[index] || winner || isDraw) return
+    if (board[index] || winner || isDraw) return
+    if (isVsComputer && currentPlayer === 'O') return // AI's turn
+
     const newBoard = [...board]
-    newBoard[index] = 'X'
+    newBoard[index] = currentPlayer
     setBoard(newBoard)
 
     const w = checkWinner(newBoard, gridSize)
     if (w) {
       setWinner(w)
       setWinningCells(findWinningCells(newBoard, w))
-      setScores((s) => ({ ...s, player: s.player + 1 }))
+      setScores((s) => ({ ...s, [w.toLowerCase() as 'x' | 'o']: s[w.toLowerCase() as 'x' | 'o'] + 1 }))
     } else if (isBoardFull(newBoard)) {
       setIsDraw(true)
       setScores((s) => ({ ...s, draws: s.draws + 1 }))
     } else {
-      setIsPlayerTurn(false)
+      const next = currentPlayer === 'X' ? 'O' : 'X'
+      setCurrentPlayer(next)
+      if (isVsComputer && next === 'O') {
+        setWaitingForAI(true)
+      }
     }
   }
 
@@ -240,7 +251,8 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
     setWinner(null)
     setIsDraw(false)
     setWinningCells(new Set())
-    setIsPlayerTurn(true)
+    setCurrentPlayer('X')
+    setWaitingForAI(false)
   }
 
   // Cell sizing
@@ -249,18 +261,19 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
     gridSize <= 5 ? 'w-16 h-16 text-2xl' :
                     'w-12 h-12 text-xl'
 
-  const statusText = winner
-    ? winner === 'X'
-      ? '🎉 You Win!'
-      : '🤖 Computer Wins!'
-    : isDraw
-    ? "🤝 It's a Draw!"
-    : isPlayerTurn
-    ? 'Your turn (X)'
-    : 'Computer thinking...'
+  const getStatusText = () => {
+    if (winner) {
+      if (isVsComputer) return winner === 'X' ? '🎉 You Win!' : '🤖 Computer Wins!'
+      return `🎉 Player ${winner} Wins!`
+    }
+    if (isDraw) return "🤝 It's a Draw!"
+    if (isVsComputer) return currentPlayer === 'X' ? 'Your turn (X)' : 'Computer thinking...'
+    return `Player ${currentPlayer}'s turn`
+  }
+  const statusText = getStatusText()
 
   const statusColor = winner
-    ? winner === 'X' ? 'text-green-400' : 'text-red-400'
+    ? (isVsComputer ? (winner === 'X' ? 'text-green-400' : 'text-red-400') : 'text-green-400')
     : isDraw ? 'text-yellow-400' : 'text-indigo-300'
 
   return (
@@ -283,16 +296,16 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
         {/* Scoreboard */}
         <div className="flex justify-center gap-6 mb-6">
           <div className="bg-gray-800/70 rounded-xl px-4 py-2 text-center">
-            <div className="text-xs text-gray-400 uppercase tracking-wider">You (X)</div>
-            <div className="text-2xl font-bold text-green-400">{scores.player}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider">{isVsComputer ? 'You (X)' : 'Player X'}</div>
+            <div className="text-2xl font-bold text-blue-400">{scores.x}</div>
           </div>
           <div className="bg-gray-800/70 rounded-xl px-4 py-2 text-center">
             <div className="text-xs text-gray-400 uppercase tracking-wider">Draw</div>
             <div className="text-2xl font-bold text-yellow-400">{scores.draws}</div>
           </div>
           <div className="bg-gray-800/70 rounded-xl px-4 py-2 text-center">
-            <div className="text-xs text-gray-400 uppercase tracking-wider">AI (O)</div>
-            <div className="text-2xl font-bold text-red-400">{scores.computer}</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider">{isVsComputer ? 'AI (O)' : 'Player O'}</div>
+            <div className="text-2xl font-bold text-red-400">{scores.o}</div>
           </div>
         </div>
 
@@ -313,7 +326,7 @@ export default function TicTacToe({ gridSize, onBack }: TicTacToeProps) {
                 <button
                   key={i}
                   onClick={() => handleCellClick(i)}
-                  disabled={!!cell || !!winner || isDraw || !isPlayerTurn}
+                  disabled={!!cell || !!winner || isDraw || (isVsComputer && currentPlayer === 'O')}
                   className={`
                     ${cellSize} rounded-lg font-bold flex items-center justify-center
                     transition-all duration-200 cursor-pointer
