@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "node server/index.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -12,9 +14,13 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-native-web": "^0.21.2",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
@@ -24,6 +30,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/react-native": "^0.72.8",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^8.2.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

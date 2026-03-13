@@ -1,8 +1,23 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive padding and sizing */
+@media (max-width: 768px) {
+  #root {
+    padding: 0;
+  }
+}
+
+@media (min-width: 769px) {
+  #root {
+    max-width: 100%;
+    padding: 1rem;
+  }
 }
 
 .logo {
@@ -39,4 +54,32 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Responsive container classes */
+.responsive-container {
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .responsive-container {
+    padding: 0.5rem;
+  }
+}
+
+/* Full screen game container */
+.game-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Mobile-first responsive text */
+.responsive-text {
+  font-size: clamp(0.875rem, 2vw, 1rem);
 }
