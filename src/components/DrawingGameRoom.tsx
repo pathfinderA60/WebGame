@@ -6,7 +6,6 @@ import DrawingCanvas from './DrawingCanvas';
 interface DrawingGameRoomProps {
   socket: Socket;
   roomId: string;
-  playerName: string;
   onBack: () => void;
 }
 

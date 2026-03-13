@@ -32,41 +32,7 @@ export default function DrawingCanvas({
   const [color, setColor] = useState('#ffffff');
   const [size, setSize] = useState(3);
   const [undoHistory, setUndoHistory] = useState<HistoryState[]>([]);
-  const [dpi, setDpi] = useState(1);
-
-  // Setup canvas with proper DPI handling and responsiveness
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const dpi = window.devicePixelRatio || 1;
-    setDpi(dpi);
-
-    const resizeCanvas = () => {
-      const rect = container.getBoundingClientRect();
-      const width = Math.max(rect.width, 100);
-      const height = Math.max(rect.height, 100);
-
-      canvas.width = width * dpi;
-      canvas.height = height * dpi;
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
-
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(dpi, dpi);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        // Redraw after resize
-        redrawCanvas();
-      }
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+  const [dpi] = useState(() => window.devicePixelRatio || 1);
 
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -100,6 +66,40 @@ export default function DrawingCanvas({
       }
     });
   }, [drawingEvents, dpi]);
+
+  // Setup canvas with proper DPI handling and responsiveness
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const resizeCanvas = () => {
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(rect.width, 100);
+      const height = Math.max(rect.height, 100);
+
+      canvas.width = width * dpi;
+      canvas.height = height * dpi;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpi, dpi);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      }
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    return () => window.removeEventListener('resize', resizeCanvas);
+  }, [dpi]);
+
+  // Redraw canvas after resize and when receiving events
+  useEffect(() => {
+    redrawCanvas();
+  }, [redrawCanvas]);
 
   // Redraw canvas when receiving events
   useEffect(() => {

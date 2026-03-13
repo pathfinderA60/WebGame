@@ -10,8 +10,7 @@ interface DrawingGameProps {
 export default function DrawingGame({ onBack }: DrawingGameProps) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [screen, setScreen] = useState<'lobby' | 'room'>('lobby');
-  const [roomId, setRoomId] = useState('');
-  const [playerName, setPlayerName] = useState('');
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     // Connect to server
@@ -22,18 +21,18 @@ export default function DrawingGame({ onBack }: DrawingGameProps) {
       reconnectionAttempts: 5,
     });
 
-    setSocket(newSocket);
+    newSocket.on('connect', () => {
+      setSocket(newSocket);
+    });
 
     return () => {
       newSocket.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleJoinRoom = (room: string, name: string) => {
     if (socket && room && name) {
       setRoomId(room);
-      setPlayerName(name);
       socket.emit('joinRoom', { roomId: room, playerName: name });
       setScreen('room');
     }
@@ -44,8 +43,7 @@ export default function DrawingGame({ onBack }: DrawingGameProps) {
       socket.emit('leaveRoom', roomId);
     }
     setScreen('lobby');
-    setRoomId('');
-    setPlayerName('');
+    setRoomId(null);
     onBack();
   };
 
@@ -63,9 +61,9 @@ export default function DrawingGame({ onBack }: DrawingGameProps) {
   return (
     <>
       {screen === 'lobby' ? (
-        <DrawingGameLobby socket={socket} onJoinRoom={handleJoinRoom} onBack={onBack} />
+        <DrawingGameLobby onJoinRoom={handleJoinRoom} onBack={onBack} />
       ) : (
-        <DrawingGameRoom socket={socket} roomId={roomId} playerName={playerName} onBack={handleBack} />
+        roomId && <DrawingGameRoom socket={socket} roomId={roomId} onBack={handleBack} />
       )}
     </>
   );

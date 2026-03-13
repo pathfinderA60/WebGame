@@ -6,6 +6,7 @@ import type { GameMode } from './components/ModeSelector'
 import GridSelector from './components/GridSelector'
 import TicTacToe from './components/TicTacToe'
 import DrawingGame from './components/DrawingGame'
+import Hyperspeed from './components/Hyperspeed'
 
 type Page =
   | { screen: 'landing' }
@@ -62,8 +63,13 @@ function App() {
   }
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-gray-900">
-      {renderScreen()}
+    <div className="w-full h-screen overflow-hidden">
+      <div className="absolute inset-0 w-full h-full">
+        <Hyperspeed />
+      </div>
+      <div className="absolute inset-0 w-full h-screen overflow-hidden bg-gradient-to-br from-gray-900/50 via-indigo-950/50 to-gray-900/50 z-10">
+        {renderScreen()}
+      </div>
     </div>
   )
 }
