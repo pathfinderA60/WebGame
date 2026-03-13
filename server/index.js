@@ -5,6 +5,7 @@ import cors from 'cors';
 import { GameManager } from './gameManager.js';
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const app = express();
 const server = http.createServer(app);
@@ -19,6 +20,9 @@ app.use(cors());
 app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const distPath = path.resolve(__dirname, "../dist");
+const legacyDistPath = path.resolve(__dirname, "../dist");
+const staticPath = fs.existsSync(distPath) ? distPath : legacyDistPath;
 
 
 const gameManager = new GameManager();
@@ -173,10 +177,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
-app.use(express.static(path.join(__dirname, "../dist")));
+app.use(express.static(staticPath));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
+  res.sendFile(path.join(staticPath, "index.html"));
 });
 
 server.listen(PORT, () => {
