@@ -20,11 +20,6 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, "../dist")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
-});
 
 const gameManager = new GameManager();
 const PORT = process.env.PORT || 3001;
@@ -176,6 +171,12 @@ io.on('connection', (socket) => {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
+});
+
+app.use(express.static(path.join(__dirname, "../dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
 
 server.listen(PORT, () => {
