@@ -14,7 +14,8 @@ export default function DrawingGame({ onBack }: DrawingGameProps) {
 
   useEffect(() => {
     // Connect to server
-    const newSocket = io('http://localhost:3001', {
+    const serverUrl = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+    const newSocket = io(serverUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
